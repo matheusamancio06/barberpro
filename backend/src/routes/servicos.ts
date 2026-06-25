@@ -65,7 +65,11 @@ router.put('/:id', async (req: AuthRequest, res: Response) => {
 
 router.delete('/:id', async (req: AuthRequest, res: Response) => {
   try {
-    await prisma.servico.delete({ where: { id: Number(req.params.id) } });
+    const id = Number(req.params.id);
+    await prisma.$transaction(async (tx) => {
+      await tx.agendamentoServico.deleteMany({ where: { servicoId: id } });
+      await tx.servico.delete({ where: { id } });
+    });
     return res.json({ message: 'Serviço excluído com sucesso' });
   } catch {
     return res.status(500).json({ error: 'Erro ao excluir serviço' });

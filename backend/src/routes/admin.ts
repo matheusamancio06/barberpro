@@ -74,6 +74,20 @@ router.post('/cleanup-duplicates', async (_req: AuthRequest, res: Response) => {
     }
     stats.planos = deletePlanoIds.length;
 
+    // Serviços duplicados
+    const servicos = await prisma.servico.findMany({ orderBy: { id: 'asc' } });
+    const keepServicoIds = new Set<number>();
+    const seenServicos = new Set<string>();
+    for (const s of servicos) {
+      if (!seenServicos.has(s.nome)) { seenServicos.add(s.nome); keepServicoIds.add(s.id); }
+    }
+    const deleteServicoIds = servicos.filter(s => !keepServicoIds.has(s.id)).map(s => s.id);
+    if (deleteServicoIds.length > 0) {
+      await prisma.agendamentoServico.deleteMany({ where: { servicoId: { in: deleteServicoIds } } });
+      await prisma.servico.deleteMany({ where: { id: { in: deleteServicoIds } } });
+    }
+    stats.servicos = deleteServicoIds.length;
+
     return res.json({ message: 'Limpeza concluída!', removidos: stats });
   } catch (err) {
     console.error('Cleanup error:', err);
