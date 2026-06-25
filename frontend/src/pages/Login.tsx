@@ -105,25 +105,28 @@ export default function Login() {
             </button>
           </div>
 
-          {/* Google Button — visible in both tabs */}
-          <button
-            onClick={handleGoogleLogin}
-            disabled={googleLoading}
-            className="w-full flex items-center justify-center gap-3 bg-white hover:bg-gray-100 disabled:opacity-50 text-gray-800 font-semibold py-3 rounded-xl transition-all mb-4"
-          >
-            {googleLoading
-              ? <div className="w-5 h-5 border-2 border-gray-400/30 border-t-gray-400 rounded-full animate-spin" />
-              : <GoogleIcon />
-            }
-            {tab === 'login' ? 'Entrar com Google' : 'Cadastrar com Google'}
-          </button>
+          {/* Google Button — visible only on login tab */}
+          {tab === 'login' && (
+            <>
+              <button
+                onClick={handleGoogleLogin}
+                disabled={googleLoading}
+                className="w-full flex items-center justify-center gap-3 bg-white hover:bg-gray-100 disabled:opacity-50 text-gray-800 font-semibold py-3 rounded-xl transition-all mb-4"
+              >
+                {googleLoading
+                  ? <div className="w-5 h-5 border-2 border-gray-400/30 border-t-gray-400 rounded-full animate-spin" />
+                  : <GoogleIcon />
+                }
+                Entrar com Google
+              </button>
 
-          {/* Divider */}
-          <div className="flex items-center gap-3 mb-4">
-            <div className="flex-1 h-px bg-gray-700" />
-            <span className="text-gray-500 text-xs">ou</span>
-            <div className="flex-1 h-px bg-gray-700" />
-          </div>
+              <div className="flex items-center gap-3 mb-4">
+                <div className="flex-1 h-px bg-gray-700" />
+                <span className="text-gray-500 text-xs">ou</span>
+                <div className="flex-1 h-px bg-gray-700" />
+              </div>
+            </>
+          )}
 
           {tab === 'login' ? (
             <form onSubmit={handleLogin(onLogin)} className="space-y-4">
