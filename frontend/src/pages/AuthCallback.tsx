@@ -14,31 +14,43 @@ export default function AuthCallback() {
     if (ran.current) return;
     ran.current = true;
 
-    const timeout = setTimeout(() => {
-      navigate('/login?erro=autenticacao_falhou');
-    }, 15000);
+    async function processSession(accessToken: string) {
+      try {
+        const response = await api.post('/auth/oauth', { accessToken });
+        login(response.data.token, response.data.usuario);
+        navigate('/');
+      } catch (err: any) {
+        const msg = err?.response?.data?.error || 'Erro ao autenticar com Google';
+        navigate(`/login?erro=${encodeURIComponent(msg)}`);
+      }
+    }
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (event === 'SIGNED_IN' && session) {
+    // First: check if session is already available (Supabase may have processed hash already)
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) {
+        processSession(session.access_token);
+        return;
+      }
+
+      // Second: listen for auth state change (session not ready yet)
+      const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+        if (event === 'SIGNED_IN' && session) {
+          subscription.unsubscribe();
+          processSession(session.access_token);
+        }
+      });
+
+      // Fallback timeout
+      const timeout = setTimeout(() => {
+        subscription.unsubscribe();
+        navigate('/login?erro=autenticacao_falhou');
+      }, 10000);
+
+      return () => {
         clearTimeout(timeout);
         subscription.unsubscribe();
-        try {
-          const response = await api.post('/auth/oauth', {
-            accessToken: session.access_token,
-          });
-          login(response.data.token, response.data.usuario);
-          navigate('/');
-        } catch (err: any) {
-          const msg = err?.response?.data?.error || 'Erro ao autenticar com Google';
-          navigate(`/login?erro=${encodeURIComponent(msg)}`);
-        }
-      }
+      };
     });
-
-    return () => {
-      clearTimeout(timeout);
-      subscription.unsubscribe();
-    };
   }, []);
 
   return (
