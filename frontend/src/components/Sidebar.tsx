@@ -11,6 +11,7 @@ import {
   ShieldCheck,
   ShoppingBag,
   Home,
+  X,
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -53,14 +54,23 @@ const ROLE_LABELS: Record<string, string> = {
   cliente: 'Cliente',
 };
 
-export default function Sidebar() {
+interface SidebarProps {
+  isOpen: boolean;
+  onClose: () => void;
+}
+
+export default function Sidebar({ isOpen, onClose }: SidebarProps) {
   const { usuario, logout } = useAuth();
   const navItems = getNavItems(usuario?.role);
 
   return (
-    <aside className="w-64 bg-gray-800 border-r border-gray-700 flex flex-col h-screen fixed left-0 top-0">
+    <aside
+      className={`w-64 bg-gray-800 border-r border-gray-700 flex flex-col h-screen fixed left-0 top-0 z-30 transition-transform duration-300 ease-in-out ${
+        isOpen ? 'translate-x-0' : '-translate-x-full'
+      } lg:translate-x-0`}
+    >
       {/* Logo */}
-      <div className="p-6 border-b border-gray-700">
+      <div className="p-6 border-b border-gray-700 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 bg-amber-500 rounded-lg flex items-center justify-center">
             <Scissors size={20} className="text-gray-900" />
@@ -70,6 +80,12 @@ export default function Sidebar() {
             <p className="text-gray-400 text-xs">Sistema de Barbearia</p>
           </div>
         </div>
+        <button
+          onClick={onClose}
+          className="lg:hidden text-gray-400 hover:text-white p-1 rounded-lg hover:bg-gray-700 transition-colors"
+        >
+          <X size={20} />
+        </button>
       </div>
 
       {/* Nav */}
@@ -80,6 +96,7 @@ export default function Sidebar() {
               <NavLink
                 to={to}
                 end={exact}
+                onClick={onClose}
                 className={({ isActive }) =>
                   `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-150 ${
                     isActive
