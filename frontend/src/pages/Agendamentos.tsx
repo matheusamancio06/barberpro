@@ -81,7 +81,7 @@ export default function Agendamentos() {
   const { register, handleSubmit, reset, formState: { errors } } = useForm<AgendamentoForm>();
 
   const createMutation = useMutation({
-    mutationFn: (data: AgendamentoForm & { servicoIds: number[] }) => api.post('/agendamentos', data),
+    mutationFn: (data: { clienteId: number; barbeiroId: number; data: string; observacoes?: string; servicoIds: number[] }) => api.post('/agendamentos', data),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['agendamentos'] }); toast.success('Agendamento criado!'); closeModal(); },
     onError: () => toast.error('Erro ao criar agendamento'),
   });
