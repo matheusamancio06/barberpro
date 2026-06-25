@@ -79,7 +79,13 @@ router.put('/:id', async (req: AuthRequest, res: Response) => {
 
 router.delete('/:id', async (req: AuthRequest, res: Response) => {
   try {
-    await prisma.barbeiro.delete({ where: { id: Number(req.params.id) } });
+    const id = Number(req.params.id);
+    await prisma.$transaction(async (tx) => {
+      await tx.agendamentoServico.deleteMany({ where: { agendamento: { barbeiroId: id } } });
+      await tx.agendamento.deleteMany({ where: { barbeiroId: id } });
+      await tx.usuario.updateMany({ where: { barbeiroId: id }, data: { barbeiroId: null } });
+      await tx.barbeiro.delete({ where: { id } });
+    });
     return res.json({ message: 'Barbeiro excluído com sucesso' });
   } catch {
     return res.status(500).json({ error: 'Erro ao excluir barbeiro' });

@@ -22,6 +22,7 @@ import BarbeiroAgenda from './pages/barbeiro/Agenda';
 import ClienteDashboard from './pages/cliente/Dashboard';
 import ClienteAgendamentos from './pages/cliente/Agendamentos';
 import ClienteProdutos from './pages/cliente/Produtos';
+import ClientePlanos from './pages/cliente/Planos';
 
 function PrivateRoute({ children, roles }: { children: React.ReactNode; roles?: string[] }) {
   const { isAuthenticated, usuario } = useAuth();
@@ -65,6 +66,7 @@ function AppRoutes() {
         <Route path="cliente" element={<PrivateRoute roles={['cliente']}><ClienteDashboard /></PrivateRoute>} />
         <Route path="cliente/agendamentos" element={<PrivateRoute roles={['cliente']}><ClienteAgendamentos /></PrivateRoute>} />
         <Route path="cliente/produtos" element={<PrivateRoute roles={['cliente']}><ClienteProdutos /></PrivateRoute>} />
+        <Route path="cliente/planos" element={<PrivateRoute roles={['cliente']}><ClientePlanos /></PrivateRoute>} />
       </Route>
 
       <Route path="*" element={<Navigate to="/" replace />} />

@@ -78,7 +78,15 @@ router.put('/:id', async (req: AuthRequest, res: Response) => {
 
 router.delete('/:id', async (req: AuthRequest, res: Response) => {
   try {
-    await prisma.cliente.delete({ where: { id: Number(req.params.id) } });
+    const id = Number(req.params.id);
+    await prisma.$transaction(async (tx) => {
+      await tx.agendamentoServico.deleteMany({ where: { agendamento: { clienteId: id } } });
+      await tx.agendamento.deleteMany({ where: { clienteId: id } });
+      await tx.assinatura.deleteMany({ where: { clienteId: id } });
+      await tx.reservaProduto.deleteMany({ where: { clienteId: id } });
+      await tx.usuario.updateMany({ where: { clienteId: id }, data: { clienteId: null } });
+      await tx.cliente.delete({ where: { id } });
+    });
     return res.json({ message: 'Cliente excluído com sucesso' });
   } catch {
     return res.status(500).json({ error: 'Erro ao excluir cliente' });

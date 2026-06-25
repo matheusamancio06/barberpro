@@ -42,6 +42,7 @@ function getNavItems(role: string | undefined) {
       { to: '/cliente', icon: Home, label: 'Início', exact: true },
       { to: '/cliente/agendamentos', icon: Calendar, label: 'Agendamentos' },
       { to: '/cliente/produtos', icon: Package, label: 'Produtos' },
+      { to: '/cliente/planos', icon: CreditCard, label: 'Planos' },
     ];
   }
 

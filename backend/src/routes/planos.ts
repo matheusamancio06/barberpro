@@ -5,6 +5,42 @@ import prisma from '../lib/prisma';
 const router = Router();
 router.use(authMiddleware);
 
+// Deve vir antes de /:id para não ser capturado como id
+router.get('/minhas-assinaturas', async (req: AuthRequest, res: Response) => {
+  try {
+    const clienteId = req.user?.clienteId;
+    if (!clienteId) return res.json([]);
+    const assinaturas = await prisma.assinatura.findMany({
+      where: { clienteId },
+      include: { plano: true },
+      orderBy: { dataInicio: 'desc' },
+    });
+    return res.json(assinaturas);
+  } catch {
+    return res.status(500).json({ error: 'Erro ao buscar assinaturas' });
+  }
+});
+
+router.post('/:id/assinar', async (req: AuthRequest, res: Response) => {
+  try {
+    const clienteId = req.user?.clienteId;
+    if (!clienteId) return res.status(400).json({ error: 'Usuário não é um cliente' });
+    const plano = await prisma.plano.findUnique({ where: { id: Number(req.params.id) } });
+    if (!plano || !plano.ativo) return res.status(404).json({ error: 'Plano não encontrado' });
+    await prisma.assinatura.updateMany({ where: { clienteId, ativo: true }, data: { ativo: false } });
+    const dataInicio = new Date();
+    const dataFim = new Date(dataInicio);
+    dataFim.setDate(dataFim.getDate() + plano.duracao);
+    const assinatura = await prisma.assinatura.create({
+      data: { clienteId, planoId: plano.id, dataInicio, dataFim, ativo: true },
+      include: { plano: true },
+    });
+    return res.status(201).json(assinatura);
+  } catch {
+    return res.status(500).json({ error: 'Erro ao assinar plano' });
+  }
+});
+
 router.get('/', async (req: AuthRequest, res: Response) => {
   try {
     const planos = await prisma.plano.findMany({
