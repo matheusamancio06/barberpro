@@ -1,0 +1,131 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model Usuario {
+  id         Int       @id @default(autoincrement())
+  nome       String
+  email      String    @unique
+  senha      String
+  role       String    @default("cliente")
+  clienteId  Int?      @unique
+  barbeiroId Int?      @unique
+  ativo      Boolean   @default(true)
+  createdAt  DateTime  @default(now())
+  cliente    Cliente?  @relation(fields: [clienteId], references: [id])
+  barbeiro   Barbeiro? @relation(fields: [barbeiroId], references: [id])
+}
+
+model Cliente {
+  id             Int              @id @default(autoincrement())
+  nome           String
+  telefone       String
+  email          String?
+  dataNascimento DateTime?
+  observacoes    String?
+  createdAt      DateTime         @default(now())
+  usuario        Usuario?
+  agendamentos   Agendamento[]
+  assinaturas    Assinatura[]
+  reservas       ReservaProduto[]
+}
+
+model Barbeiro {
+  id            Int            @id @default(autoincrement())
+  nome          String
+  telefone      String
+  email         String?
+  especialidade String?
+  comissao      Float          @default(50)
+  ativo         Boolean        @default(true)
+  createdAt     DateTime       @default(now())
+  usuario       Usuario?
+  agendamentos  Agendamento[]
+}
+
+model Servico {
+  id           Int                  @id @default(autoincrement())
+  nome         String
+  descricao    String?
+  preco        Float
+  duracao      Int
+  ativo        Boolean              @default(true)
+  createdAt    DateTime             @default(now())
+  agendamentos AgendamentoServico[]
+}
+
+model Produto {
+  id        Int              @id @default(autoincrement())
+  nome      String
+  descricao String?
+  preco     Float
+  estoque   Int              @default(0)
+  categoria String?
+  ativo     Boolean          @default(true)
+  createdAt DateTime         @default(now())
+  reservas  ReservaProduto[]
+}
+
+model ReservaProduto {
+  id          Int      @id @default(autoincrement())
+  produtoId   Int
+  clienteId   Int
+  quantidade  Int      @default(1)
+  status      String   @default("pendente")
+  observacoes String?
+  createdAt   DateTime @default(now())
+  produto     Produto  @relation(fields: [produtoId], references: [id])
+  cliente     Cliente  @relation(fields: [clienteId], references: [id])
+}
+
+model Plano {
+  id          Int          @id @default(autoincrement())
+  nome        String
+  descricao   String?
+  preco       Float
+  duracao     Int
+  servicos    String
+  ativo       Boolean      @default(true)
+  createdAt   DateTime     @default(now())
+  assinaturas Assinatura[]
+}
+
+model Assinatura {
+  id         Int      @id @default(autoincrement())
+  clienteId  Int
+  planoId    Int
+  dataInicio DateTime @default(now())
+  dataFim    DateTime
+  ativo      Boolean  @default(true)
+  cliente    Cliente  @relation(fields: [clienteId], references: [id])
+  plano      Plano    @relation(fields: [planoId], references: [id])
+}
+
+model Agendamento {
+  id          Int                  @id @default(autoincrement())
+  clienteId   Int
+  barbeiroId  Int
+  data        DateTime
+  status      String               @default("agendado")
+  total       Float                @default(0)
+  observacoes String?
+  createdAt   DateTime             @default(now())
+  cliente     Cliente              @relation(fields: [clienteId], references: [id])
+  barbeiro    Barbeiro             @relation(fields: [barbeiroId], references: [id])
+  servicos    AgendamentoServico[]
+}
+
+model AgendamentoServico {
+  id            Int         @id @default(autoincrement())
+  agendamentoId Int
+  servicoId     Int
+  preco         Float
+  agendamento   Agendamento @relation(fields: [agendamentoId], references: [id], onDelete: Cascade)
+  servico       Servico     @relation(fields: [servicoId], references: [id])
+}
