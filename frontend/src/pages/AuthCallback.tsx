@@ -16,11 +16,24 @@ export default function AuthCallback() {
 
     async function handleCallback() {
       try {
-        const { data: { session }, error } = await supabase.auth.getSession();
+        // PKCE flow: Supabase v2 sends ?code= in the URL
+        const code = new URLSearchParams(window.location.search).get('code');
+        let session = null;
 
-        if (error || !session) {
-          navigate('/login?erro=autenticacao_falhou');
-          return;
+        if (code) {
+          const { data, error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
+          if (exchangeError || !data.session) {
+            navigate('/login?erro=autenticacao_falhou');
+            return;
+          }
+          session = data.session;
+        } else {
+          const { data, error } = await supabase.auth.getSession();
+          if (error || !data.session) {
+            navigate('/login?erro=autenticacao_falhou');
+            return;
+          }
+          session = data.session;
         }
 
         const response = await api.post('/auth/oauth', {
