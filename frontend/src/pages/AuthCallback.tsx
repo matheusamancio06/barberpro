@@ -14,28 +14,31 @@ export default function AuthCallback() {
     if (ran.current) return;
     ran.current = true;
 
-    async function handleCallback() {
-      try {
-        const { data: { session }, error } = await supabase.auth.getSession();
+    const timeout = setTimeout(() => {
+      navigate('/login?erro=autenticacao_falhou');
+    }, 15000);
 
-        if (error || !session) {
-          navigate('/login?erro=autenticacao_falhou');
-          return;
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (event === 'SIGNED_IN' && session) {
+        clearTimeout(timeout);
+        subscription.unsubscribe();
+        try {
+          const response = await api.post('/auth/oauth', {
+            accessToken: session.access_token,
+          });
+          login(response.data.token, response.data.usuario);
+          navigate('/');
+        } catch (err: any) {
+          const msg = err?.response?.data?.error || 'Erro ao autenticar com Google';
+          navigate(`/login?erro=${encodeURIComponent(msg)}`);
         }
-
-        const response = await api.post('/auth/oauth', {
-          accessToken: session.access_token,
-        });
-
-        login(response.data.token, response.data.usuario);
-        navigate('/');
-      } catch (err: any) {
-        const msg = err?.response?.data?.error || 'Erro ao autenticar com Google';
-        navigate(`/login?erro=${encodeURIComponent(msg)}`);
       }
-    }
+    });
 
-    handleCallback();
+    return () => {
+      clearTimeout(timeout);
+      subscription.unsubscribe();
+    };
   }, []);
 
   return (
